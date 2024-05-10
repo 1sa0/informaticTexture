@@ -22,8 +22,8 @@ def main():
         min_tracking_confidence=0.5,
     )    
     
-    
-    cap = cv2.VideoCapture(1)
+    #なんか動かない
+    cap = cv2.VideoCapture(4)
     
     while cap.isOpened():
         success,image = cap.read()
