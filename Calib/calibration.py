@@ -18,13 +18,17 @@ class Calib():
         Loads the internal and external parameters of two cameras from a YML file.
         
         Parameters:
-        cam1YmlFilename, cam2YmlFilename, exYmlFilename (str): The YML filename containing the parameters. Default filenames are intrinsic1.yml, intrinsic2.yml and extrinsic.yml.
+        cam1YmlFilename(str), cam2YmlFilename(str), exYmlFilename (str): The YML filename containing the parameters.
+            Default filenames are intrinsic1.yml, intrinsic2.yml and extrinsic.yml.
+        
+        Returns:
+            cam1Intrinsic(dict), cam2Intrinsic(dict), extrinsic(dict): The camera parameters.
         """
         
         
-        cam1Intrinsic = self._readYml(self.ymlDir + '/' + cam1YmlFilename)
-        cam2Intrinsic = self._readYml(self.ymlDir + '/' + cam2YmlFilename)
-        extrinsic = self._readYml(self.ymlDir + '/' + exYmlFilename)
+        cam1Intrinsic = self._readIntrinsicYml(self.ymlDir + '/' + cam1YmlFilename)
+        cam2Intrinsic = self._readIntrinsicYml(self.ymlDir + '/' + cam2YmlFilename)
+        extrinsic = self._readExtrinsicYml(self.ymlDir + '/' + exYmlFilename)
 
         return cam1Intrinsic, cam2Intrinsic, extrinsic
     
@@ -110,12 +114,25 @@ class Calib():
         
         return retval, mtx1, dist1, mtx2, dist2, R, T, E, F
         
-    def _readYml(self, ymlPath:str):
-        with open(ymlPath, 'r') as f:
-            parameter = yaml.state_load(f)
-                
-        return parameter
-
+    def _readIntrinsicYml(self, ymlPath:str):
+        fs = cv2.FileStorage(ymlPath, cv2.FILE_STORAGE_READ)    
+        mtx = fs.getNode("intrinsic").mat()
+        dist = fs.getNode("distortion").mat()
+        fs.release()
+    
+        return {"mtx":mtx, "dist":dist}
+    
+    
+    def _readExtrinsicYml(self, ymlPath:str):
+        fs = cv2.FileStorage(ymlPath, cv2.FILE_STORAGE_READ)
+        E = fs.getNode("E").mat()
+        F = fs.getNode("F").mat()
+        R = fs.getNode("R").mat()
+        T = fs.getNode("T").mat()
+        fs.release()
+        return {"E":E, "F":F, "R":R, "T":T}
+    
+    
     def _setSplitMode(self, mode:int=0):
         
         if mode == 0:
