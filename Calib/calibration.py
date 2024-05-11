@@ -14,6 +14,13 @@ class Calib():
         self.criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
     def getParameter(self, cam1YmlFilename:str='intrinsic1.yml', cam2YmlFilename:str='intrinsic2.yml', exYmlFilename:str='extrinsic.yml'):
+        """
+        Loads the internal and external parameters of two cameras from a YML file.
+        
+        Parameters:
+        cam1YmlFilename, cam2YmlFilename, exYmlFilename (str): The YML filename containing the parameters. Default filenames are intrinsic1.yml, intrinsic2.yml and extrinsic.yml.
+        """
+        
         
         cam1Intrinsic = self._readYml(self.ymlDir + '/' + cam1YmlFilename)
         cam2Intrinsic = self._readYml(self.ymlDir + '/' + cam2YmlFilename)
@@ -35,6 +42,23 @@ class Calib():
         """
         if outPutDir == None:
             outPutDir = self.ymlDir
+            
+        self._setSplitMode(mode)
+        
+        # return val: cv2.stereoCalibrate()
+        retval, mtx1, dist1, mtx2, dist2, R, T, E, F = self._calibrationProcess(calibImgDir)
+        
+        
+        print(outPutDir)
+        self._writeIntrinsicYml(mtx1,dist1, filename = cam1YmlFilename, path = outPutDir)
+        self._writeIntrinsicYml(mtx2,dist2, filename = cam2YmlFilename, path = outPutDir)
+        self._writeExtrinsicYml(retval,R,T,E,F, filename = exYmlFilename, path = outPutDir)
+
+    ###
+    ###ここからプライベートメソッド
+    ###
+    
+    def _calibrationProcess(self, calibImgDir):
         
         #objp:チェスボード内コーナーの3D座標リスト用のidx，チェスボードは平面を仮定しz方向は0のみとする, [(0,0,0),(1,0,0)...(9,12,zn)]
         objp = np.zeros((self._CHECKER_BOARD[0]*self._CHECKER_BOARD[1],3), np.float32)
@@ -47,7 +71,7 @@ class Calib():
         img1_points = [] #キャリブ画像座標系2次元点
         img2_points = []
         
-        self._setSplitMode(mode)
+        
         
         files = glob.glob(calibImgDir + "/*.png")
         for file in files:
@@ -64,11 +88,11 @@ class Calib():
                 obj1_points.append(objp)
                 obj2_points.append(objp)
                 
-                corners12 = cv2.cornerSubPix(img1, corners1, (11,11),(-1,-1), self.criteria)
-                corners22 = cv2.cornerSubPix(img2, corners2, (11,11),(-1,-1), self.criteria)
+                corners1 = cv2.cornerSubPix(img1, corners1, (11,11),(-1,-1), self.criteria)
+                corners2 = cv2.cornerSubPix(img2, corners2, (11,11),(-1,-1), self.criteria)
 
-                img1_points.append(corners12)
-                img2_points.append(corners22)
+                img1_points.append(corners1)
+                img2_points.append(corners2)
             #ここまで
         
         if (len(obj1_points)>0 and len(img1_points)>0) and (len(obj2_points)>0 and len(img2_points)>0): 
@@ -77,26 +101,21 @@ class Calib():
 
         else:
             print("Calibration failure")
+            return False
 
 
         retval, mtx1, dist1, mtx2, dist2, R, T, E, F = cv2.stereoCalibrate(objectPoints=obj1_points, imagePoints1=img1_points, imagePoints2=img2_points,
                                         cameraMatrix1=mtx1, distCoeffs1=dist1, cameraMatrix2=mtx2, distCoeffs2=dist2,
                                         imageSize=img2.shape, criteria=self.criteria, flags=cv2.CALIB_USE_INTRINSIC_GUESS)
-    
-        self._writeIntrinsicYml(mtx1,dist1, filename = cam1YmlFilename, path = outPutDir)
-        self._writeIntrinsicYml(mtx2,dist2, filename = cam2YmlFilename, path = outPutDir)
-        self._writeExtrinsicYml(retval,R,T,E,F, filename = exYmlFilename, path = outPutDir)
-
-    ###
-    ###ここからプライベートメソッド
-    ###
+        
+        return retval, mtx1, dist1, mtx2, dist2, R, T, E, F
         
     def _readYml(self, ymlPath:str):
         with open(ymlPath, 'r') as f:
             parameter = yaml.state_load(f)
                 
         return parameter
-            
+
     def _setSplitMode(self, mode:int=0):
         
         if mode == 0:
@@ -114,13 +133,13 @@ class Calib():
         img2 = img[:, img.shape[1]//2:]
         return img1, img2
     
-    def _writeIntrinsicYml(mtx, dist, path:str, filename:str='intrinsic.yml'):
+    def _writeIntrinsicYml(self, mtx, dist, path:str, filename:str="intrinsic.yml"):
         fs = cv2.FileStorage(os.path.join(path,filename), flags=cv2.FILE_STORAGE_WRITE)
         fs.write('intrinsic', mtx)
         fs.write('distortion',dist)
         fs.release()
 
-    def _writeExtrinsicYml(retval,R,T,E,F, path:str, filename:str='extrinsic.yml'):
+    def _writeExtrinsicYml(self, retval,R,T,E,F, path:str, filename:str='extrinsic.yml'):
         fs = cv2.FileStorage(os.path.join(path, filename), flags=cv2.FILE_STORAGE_WRITE)
         fs.write('retval',retval)
         fs.write('R', R)
@@ -128,3 +147,8 @@ class Calib():
         fs.write('E', E)
         fs.write('F', F)
         fs.release()
+        
+        
+if __name__ == "__main__":
+    calib = Calib(ymlDir='./Calib/resultsYml')
+    calib.writeYml(calibImgDir="./Calib/img/")
