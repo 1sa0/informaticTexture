@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import os
 
+import matplotlib.pyplot as plt
+
 
 class Calib():
     def __init__(self, ymlDir:str, checker_board:tuple=(7,10)):
@@ -52,8 +54,6 @@ class Calib():
         # return val: cv2.stereoCalibrate()
         retval, mtx1, dist1, mtx2, dist2, R, T, E, F = self._calibrationProcess(calibImgDir)
         
-        
-        print(outPutDir)
         self._writeIntrinsicYml(mtx1,dist1, filename = cam1YmlFilename, path = outPutDir)
         self._writeIntrinsicYml(mtx2,dist2, filename = cam2YmlFilename, path = outPutDir)
         self._writeExtrinsicYml(retval,R,T,E,F, filename = exYmlFilename, path = outPutDir)
@@ -85,6 +85,7 @@ class Calib():
                 print(f'Image loading failure:{file}')
                 continue
             img1, img2 = self._splitImg(img)
+            
             ret1, corners1 = cv2.findChessboardCorners(img1, self._CHECKER_BOARD, None)
             ret2, corners2 = cv2.findChessboardCorners(img2, self._CHECKER_BOARD, None)
             
@@ -143,11 +144,13 @@ class Calib():
     def _splitVertical(self, img):
         img1 = img[:img.shape[0]//2,:]
         img2 = img[img.shape[0]//2:, :]
+        
         return img1, img2
     
     def _splitHorizontal(self, img):
         img1 = img[:, :img.shape[1]//2]
         img2 = img[:, img.shape[1]//2:]
+        
         return img1, img2
     
     def _writeIntrinsicYml(self, mtx, dist, path:str, filename:str="intrinsic.yml"):
