@@ -7,7 +7,9 @@ class reprojectTo3D():
     def __init__(self, disparityMap = None):
         self.disparityMap = disparityMap
         self.stereo = None
-        
+
+    def printDisparityMap(self):
+        print(self.disparityMap)        
 
     def reproject(self,img1, img2, img1Intrinsic:dict, img2Intrinsic:dict, extrinsic:dict, mtxKey:str="mtx", distKey:str="dist"):
         
@@ -36,7 +38,9 @@ class reprojectTo3D():
         if self.stereo == None:
             self.setStereoParameter()
         
-        self.disparityMap = self.stereo.compute(img1,img2).astype(np.float32)/16.0
+        disparityMap_16bit = self.stereo.compute(img1,img2)
+        #得られる視差マップは16bitなので、32bit floatにするために16除算
+        self.disparityMap = disparityMap_16bit.astype(np.float32)/16.0
         cv2.imwrite('./reprojectTo3D/result/disparityMap.png', self.disparityMap)
         
     def setStereoParameter(self,minDisparity:int=0, numDisparities:int=96, blockSize:int=16, windowSize:int=3, p1:int=8, p2:int=32, 
