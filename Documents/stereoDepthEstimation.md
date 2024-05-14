@@ -14,23 +14,23 @@
 3. 視差測定
 4. 奥行き推定
 
-### Camera Calibration
+### 1.Camera Calibration
 - カメラの個体差（レンズやイメージセンサの特性）によらない画像処理・奥行き推定を行うために，カメラの内部パラメタ（焦点距離，センサ中心情報）を取得するプロセス
 - チェスボードのような高コントラスト・規則的な幾何学模様（特徴点が検出しやすい）パターンを用いる
 <img src="./static/calibBoard.jpg" alt="triangulation" style="display: block; margin: 0 auto;">
 
-### Stereo Rectify
+### 2.Stereo Rectify
 - カメラの内部パラメタを元に補正を行いカメラの個体差を排除する
 - 水平に見えるような回転行列と移動行列を求める
 <img src="./static/calib_1.png" alt="before Rectify">
 <img src="./static/rectifiedImgL.png" alt="after Rectify">
 
-### Compute Disparity
+### 3.Compute Disparity
 - それぞれの画像の対応する点を求め，ピクセル座標のずれから視差を計算する
 
 ※ cv.stereoSGBMを用いて得られる視差は16倍で帰ってくるので距離変換時に補正する必要がある
 <img src="./static/disparityMap.png" alt="disparityMap" style="display: block; margin: 0 auto;">
 
-### reproject To 3D
+### 4.reproject To 3D
 視差を距離に変換する
 （今後やります）
