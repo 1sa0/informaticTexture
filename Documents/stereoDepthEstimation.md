@@ -27,6 +27,9 @@
 
 ### 3.Compute Disparity
 - それぞれの画像の対応する点を求め，ピクセル座標のずれから視差を計算する
+#### SGM参考
+<cite>[Semi Global Matching (SGM) と 動的計画法] https://daily-tech.hatenablog.com/entry/2018/10/20/125423 </cite>
+
 
 ※ cv.stereoSGBMを用いて得られる視差は16倍で帰ってくるので距離変換時に補正する必要がある
 <img src="./static/disparityMap.png" alt="disparityMap" style="display: block; margin: 0 auto;">
